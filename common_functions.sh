@@ -202,7 +202,7 @@ autoscaling_enter_standby() {
     fi
 
     msg "Waiting for move to Standby to finish"
-    wait_for_state "autoscaling" $instance_id "Standby" WAITER_ATTEMPTS_ASG_ENTER_STANDBY
+    wait_for_state "autoscaling" $instance_id "Standby" "" $WAITER_ATTEMPTS_ASG_ENTER_STANDBY
     if [ $? != 0 ]; then
         local wait_timeout=$(($WAITER_INTERVAL_ASG * $WAITER_ATTEMPTS))
         msg "Instance $instance_id did not make it to standby after $wait_timeout seconds"
@@ -363,6 +363,10 @@ wait_for_state() {
     local instance_id=$2
     local state_name=$3
     local target_group=$4
+    local waiter_attempts=$5
+
+    echo "WAITER ATTEMPTS"
+    echo "$waiter_attempts"
 
     local instance_state_cmd
     if [ "$service" == "alb" ]; then
@@ -382,11 +386,10 @@ wait_for_state() {
 
     # Check if a custom waiter_attempts was passed into the function
     # and override the attemps if true
-    if [ -n ${var+5} ]; then
-        local waiter_attempts=$5
-    else
+    if [ -z "$waiter_attempts" ]; then
         local waiter_attempts=$WAITER_ATTEMPTS
     fi
+    echo "$waiter_attempts"
 
     msg "Checking $waiter_attempts times, every $waiter_interval seconds, for instance $instance_id to be in state $state_name"
 
